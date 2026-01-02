@@ -12,6 +12,6 @@ export const commit = (
 };
 
 export const push = () => {
-	const result = exec("git push");
+	const result = exec("git push -u origin snapshots");
 	if (result.includes("error:")) throw new Error(result);
 };

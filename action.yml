@@ -18,6 +18,17 @@ runs:
   steps:
     # Checkout the calling repo (where .changebotrc.yml and snapshots live)
     - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - run: |
+        git fetch origin snapshots:snapshots 2>/dev/null || git checkout -b snapshots
+        git checkout snapshots
+      shell: bash
+
+       # Get config from main (not committed, just for reading)
+    - run: git checkout origin/main -- .changebotrc.yml
+      shell: bash
 
     # Fetch the monitor code
     - uses: actions/checkout@v6
