@@ -4,11 +4,29 @@ author: Philipp Gartz <https://github.com/phlgr>
 inputs:
   command:
     required: true
-    description: The command to run to check for changes.
+    description: The command to run (update or check).
     default: update
 runs:
-  using: node24
-  main: src/monitor.ts
+  using: composite
+  steps:
+    # Checkout the calling repo (where .changebotrc.yml and snapshots live)
+    - uses: actions/checkout@v6
+
+    # Fetch the monitor code
+    - uses: actions/checkout@v6
+      with:
+        repository: phlgr/changebot-monitor
+        path: .changebot-monitor
+
+    - uses: oven-sh/setup-bun@v2
+
+    - run: bun install --frozen-lockfile
+      shell: bash
+      working-directory: .changebot-monitor
+
+    # Run the monitor from the calling repo's root (so git operations work)
+    - run: bun run .changebot-monitor/src/monitor.ts --${{ inputs.command }}
+      shell: bash
 branding:
   icon: search
   color: blue
