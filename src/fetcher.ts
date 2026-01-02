@@ -1,8 +1,7 @@
 import { DOMParser } from "@xmldom/xmldom";
 import * as cheerio from "cheerio";
 import * as xpath from "xpath";
-import type { FetchResult, Website } from "./types.js";
-import { config } from "./config.js";
+import type { Config, FetchResult, Website } from "./types.js";
 
 // Constants for retry logic
 const INITIAL_RETRY_DELAY_MS = 1000; // Initial delay before first retry
@@ -14,6 +13,7 @@ const MAX_RETRY_DELAY_MS = 10000; // Maximum delay between retries
 export async function fetchWithRetry(
 	website: Website,
 	options: { timeout: number; retries: number },
+	{ config }: { config: Config },
 ): Promise<FetchResult> {
 	const { url, selector } = website;
 	const { timeout, retries } = options;

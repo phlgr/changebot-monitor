@@ -1,6 +1,5 @@
-import { config } from "./config.js";
-import type { ChangeResult, Snapshot, Website } from "./types.js";
-import { TRUNCATION_LIMITS, formatTimestamp, urlToFilename } from "./utils.js";
+import type { ChangeResult, Config, Snapshot, Website } from "./types.js";
+import { formatTimestamp, TRUNCATION_LIMITS, urlToFilename } from "./utils.js";
 
 const priorityMap: Record<Website["priority"], number> = {
 	urgent: 5,
@@ -19,6 +18,7 @@ const priorityMap: Record<Website["priority"], number> = {
 function shouldSendErrorNotification(
 	errorCount: number,
 	lastNotificationTime: number,
+	{ config }: { config: Config },
 ): { shouldNotify: boolean; reason?: string } {
 	const threshold = config.settings.error_notification_threshold;
 	const cooldown = config.settings.error_notification_cooldown_ms;
@@ -53,6 +53,7 @@ function shouldSendErrorNotification(
 export async function sendChangeNotification(
 	result: ChangeResult,
 	website: Website,
+	{ config }: { config: Config },
 ): Promise<void> {
 	let title: string;
 	let message: string;
@@ -84,19 +85,22 @@ export async function sendChangeNotification(
 		}
 	}
 
-	await sendNtfyNotification({
-		topic: config.ntfy.topic,
-		title,
+	await sendNtfyNotification(
+		{
+			topic: config.ntfy.topic,
+			title,
 
-		priority: priorityMap[website.priority] ?? priorityMap.default,
-		tags: [
-			...(website.tags ?? []),
-			"changedetection",
-			result.isFirstRun ? "initial" : "changed",
-		],
-		message,
-		click: result.url,
-	});
+			priority: priorityMap[website.priority] ?? priorityMap.default,
+			tags: [
+				...(website.tags ?? []),
+				"changedetection",
+				result.isFirstRun ? "initial" : "changed",
+			],
+			message,
+			click: result.url,
+		},
+		{ config },
+	);
 }
 
 /**
@@ -110,6 +114,7 @@ export async function sendErrorNotification(
 	website: Website,
 	error: Error,
 	snapshot: Snapshot | null,
+	{ config }: { config: Config },
 ): Promise<Snapshot | null> {
 	const errorCount = snapshot?.error_count ?? 0;
 	const lastNotificationTime = snapshot?.last_error_notification_time ?? 0;
@@ -117,6 +122,7 @@ export async function sendErrorNotification(
 	const { shouldNotify, reason } = shouldSendErrorNotification(
 		errorCount,
 		lastNotificationTime,
+		{ config },
 	);
 
 	if (!shouldNotify) {
@@ -130,14 +136,17 @@ export async function sendErrorNotification(
 		`Error: ${error.message}\n` +
 		`Timestamp: ${formatTimestamp(new Date())}`;
 
-	await sendNtfyNotification({
-		topic: config.ntfy.topic,
-		title,
-		message,
-		priority: priorityMap.urgent,
-		tags: [...(website.tags ?? []), "error"],
-		click: website.url,
-	});
+	await sendNtfyNotification(
+		{
+			topic: config.ntfy.topic,
+			title,
+			message,
+			priority: priorityMap.urgent,
+			tags: [...(website.tags ?? []), "error"],
+			click: website.url,
+		},
+		{ config },
+	);
 
 	// Return updated snapshot with notification time
 	if (snapshot) {
@@ -152,14 +161,17 @@ export async function sendErrorNotification(
 /**
  * Send ntfy.sh notification
  */
-async function sendNtfyNotification(params: {
-	topic: string;
-	title: string;
-	priority: number;
-	message: string;
-	tags?: string[];
-	click?: string;
-}): Promise<void> {
+async function sendNtfyNotification(
+	params: {
+		topic: string;
+		title: string;
+		priority: number;
+		message: string;
+		tags?: string[];
+		click?: string;
+	},
+	{ config }: { config: Config },
+): Promise<void> {
 	try {
 		const response = await fetch(config.ntfy.server, {
 			method: "POST",

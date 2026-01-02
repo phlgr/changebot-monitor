@@ -8,7 +8,7 @@ export const commit = (
 	exec(`git config user.email "${email}"`);
 	exec(`git config user.name "${name}"`);
 	exec(`git add ./snapshots`);
-	exec(`git commit -m "${message.replace(/\"/g, "''")}"`);
+	exec(`git commit -m "${message.replace(/"/g, "''")}"`);
 };
 
 export const push = () => {

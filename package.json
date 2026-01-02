@@ -1,9 +1,10 @@
 {
 	"name": "changebot-monitor",
-	"module": "index.ts",
+	"module": "src/monitor.ts",
 	"type": "module",
 	"private": true,
 	"scripts": {
+		"start": "bun run src/monitor.ts",
 		"lint": "bun run lint:types && bun run lint:fix",
 		"lint:fix": "biome check --write .",
 		"lint:types": "tsgo"

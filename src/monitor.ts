@@ -1,16 +1,23 @@
-import { config } from "./config";
 import { compareContent } from "./differ";
 import { fetchWithRetry } from "./fetcher";
+import { commit, push } from "./git";
+import { getConfig } from "./helpers/config";
 import { sendChangeNotification, sendErrorNotification } from "./notifier";
 import { loadSnapshot, saveSnapshot } from "./storage";
-import type { ChangeResult, Snapshot, SnapshotEntry, Website } from "./types";
+import type {
+	ChangeResult,
+	Config,
+	Snapshot,
+	SnapshotEntry,
+	Website,
+} from "./types";
 import { calculateHash, formatTimestamp } from "./utils";
-import { commit, push } from "./git";
 
 /**
  * Main monitoring function
  */
 export async function main(): Promise<void> {
+	const config = await getConfig();
 	console.log("🔍 Starting website change detection...");
 
 	// Cache enabled websites to avoid multiple filter calls
@@ -24,7 +31,7 @@ export async function main(): Promise<void> {
 		console.log(`\n📡 Checking: ${website.name}`);
 
 		try {
-			const result = await monitorWebsite(website);
+			const result = await monitorWebsite(website, { config });
 			return { success: true, result, website };
 		} catch (error) {
 			console.error(`❌ Failed to monitor ${website.name}:`);
@@ -77,6 +84,7 @@ export async function main(): Promise<void> {
 					website,
 					error instanceof Error ? error : new Error(errorMessage),
 					currentSnapshot,
+					{ config },
 				);
 
 				// Save updated snapshot if notification was sent (contains updated last_error_notification_time)
@@ -141,12 +149,19 @@ export async function main(): Promise<void> {
 /**
  * Monitor a single website
  */
-async function monitorWebsite(website: Website): Promise<ChangeResult> {
+async function monitorWebsite(
+	website: Website,
+	{ config }: { config: Config },
+): Promise<ChangeResult> {
 	// Fetch current content
-	const fetchResult = await fetchWithRetry(website, {
-		timeout: config.settings.timeout,
-		retries: config.settings.retries,
-	});
+	const fetchResult = await fetchWithRetry(
+		website,
+		{
+			timeout: config.settings.timeout,
+			retries: config.settings.retries,
+		},
+		{ config },
+	);
 
 	if (fetchResult.error) {
 		throw new Error(fetchResult.error);
@@ -190,7 +205,7 @@ async function monitorWebsite(website: Website): Promise<ChangeResult> {
 
 		if (shouldNotify) {
 			try {
-				await sendChangeNotification(result, website);
+				await sendChangeNotification(result, website, { config });
 			} catch (error) {
 				console.error(
 					`Failed to send change notification for ${website.name}:`,
