@@ -1,0 +1,14 @@
+name: ChangeBot
+description: Monitor websites for changes and get notified via ntfy.sh. Powered by GitHub Actions and Bun.
+author: Philipp Gartz <https://github.com/phlgr>
+inputs:
+  command:
+    required: true
+    description: The command to run to check for changes.
+    default: update
+runs:
+  using: bun1
+  main: monitor.ts
+branding:
+  icon: search
+  color: blue
