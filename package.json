@@ -1,0 +1,21 @@
+{
+	"name": "changebot-monitor",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"lint": "bun run lint:types && bun run lint:fix",
+		"lint:fix": "biome check --write .",
+		"lint:types": "tsgo"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.10",
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"@typescript/native-preview": "^7.0.0-dev.20260102.1"
+	}
+}
