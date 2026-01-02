@@ -8,7 +8,7 @@ inputs:
     default: update
 runs:
   using: node24
-  main: monitor.ts
+  main: src/monitor.ts
 branding:
   icon: search
   color: blue
