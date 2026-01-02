@@ -7,7 +7,7 @@ inputs:
     description: The command to run to check for changes.
     default: update
 runs:
-  using: bun1
+  using: node24
   main: monitor.ts
 branding:
   icon: search
