@@ -7,18 +7,11 @@ import { createHash } from "node:crypto";
  * @returns A lowercase filename with hostname and pathname, ending in .json
  * @throws Error if the URL is invalid
  */
-export function urlToFilename(url: string): string {
-	try {
-		const parsed = new URL(url);
-		const hostname = parsed.hostname.replace(/\./g, "-");
-		const pathname = parsed.pathname
-			.replace(/[^a-zA-Z0-9]/g, "-")
-			.replace(/-+/g, "-")
-			.replace(/^-|-$/g, "");
-		return `${hostname}${pathname || "index"}.json`.toLowerCase();
-	} catch {
-		throw new Error(`Invalid URL: ${url}`);
-	}
+export function filenameFromUrlAndName(url: string, name: string): string {
+	return `${name.replace(/[^a-zA-Z0-9]/g, "-")}-${url
+		.replace(/[^a-zA-Z0-9]/g, "-")
+		.replace(/-+/g, "-")
+		.replace(/^-|-$/g, "")}.json`;
 }
 
 /**

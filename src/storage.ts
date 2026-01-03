@@ -1,24 +1,24 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { Snapshot } from "./types";
-import { urlToFilename } from "./utils";
+import { filenameFromUrlAndName } from "./utils";
 
 const SNAPSHOTS_DIR = "./snapshots";
 
 /**
  * Get snapshot file path for URL
  */
-function getSnapshotPath(url: string): string {
-	const filename = urlToFilename(url);
+function getSnapshotPath(url: string, name: string): string {
+	const filename = filenameFromUrlAndName(url, name);
 	return path.join(SNAPSHOTS_DIR, filename);
 }
 
 /**
  * Load existing snapshot or return null
  */
-export function loadSnapshot(url: string): Snapshot | null {
+export function loadSnapshot(url: string, name: string): Snapshot | null {
 	try {
-		const snapshotPath = getSnapshotPath(url);
+		const snapshotPath = getSnapshotPath(url, name);
 		if (!fs.existsSync(snapshotPath)) {
 			return null;
 		}
@@ -36,7 +36,7 @@ export function loadSnapshot(url: string): Snapshot | null {
  */
 export function saveSnapshot(snapshot: Snapshot): void {
 	try {
-		const snapshotPath = getSnapshotPath(snapshot.url);
+		const snapshotPath = getSnapshotPath(snapshot.url, snapshot.name);
 		const dir = path.dirname(snapshotPath);
 
 		if (!fs.existsSync(dir)) {

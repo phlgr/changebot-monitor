@@ -39,7 +39,7 @@ export async function main(): Promise<void> {
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);
 
-			const existingSnapshot = loadSnapshot(website.url);
+			const existingSnapshot = loadSnapshot(website.url, website.name);
 			let snapshot: Snapshot;
 
 			if (existingSnapshot) {
@@ -176,7 +176,7 @@ async function monitorWebsite(
 	};
 
 	// Load existing snapshot
-	const existing = loadSnapshot(website.url);
+	const existing = loadSnapshot(website.url, website.name);
 	const oldEntry = existing?.current;
 
 	// Compare content

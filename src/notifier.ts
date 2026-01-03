@@ -1,5 +1,9 @@
 import type { ChangeResult, Config, Snapshot, Website } from "./types";
-import { formatTimestamp, TRUNCATION_LIMITS, urlToFilename } from "./utils";
+import {
+	filenameFromUrlAndName,
+	formatTimestamp,
+	TRUNCATION_LIMITS,
+} from "./utils";
 
 const priorityMap: Record<Website["priority"], number> = {
 	urgent: 5,
@@ -66,7 +70,7 @@ export async function sendChangeNotification(
 			`Timestamp: ${new Date().toISOString()}`;
 	} else {
 		title = `📢 Change detected: ${result.name}`;
-		const filename = urlToFilename(result.url);
+		const filename = filenameFromUrlAndName(result.url, result.name);
 		const baseMessage =
 			`Changes detected at ${new Date().toISOString()}\n` +
 			`Snapshot: snapshots/${filename}`;
