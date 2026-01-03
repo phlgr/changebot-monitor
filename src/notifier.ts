@@ -1,5 +1,5 @@
-import type { ChangeResult, Config, Snapshot, Website } from "./types.js";
-import { formatTimestamp, TRUNCATION_LIMITS, urlToFilename } from "./utils.js";
+import type { ChangeResult, Config, Snapshot, Website } from "./types";
+import { formatTimestamp, TRUNCATION_LIMITS, urlToFilename } from "./utils";
 
 const priorityMap: Record<Website["priority"], number> = {
 	urgent: 5,

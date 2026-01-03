@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { Snapshot } from "./types.js";
-import { urlToFilename } from "./utils.js";
+import type { Snapshot } from "./types";
+import { urlToFilename } from "./utils";
 
 const SNAPSHOTS_DIR = "./snapshots";
 

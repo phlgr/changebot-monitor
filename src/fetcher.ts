@@ -1,7 +1,7 @@
 import { DOMParser } from "@xmldom/xmldom";
 import * as cheerio from "cheerio";
 import * as xpath from "xpath";
-import type { Config, FetchResult, Website } from "./types.js";
+import type { Config, FetchResult, Website } from "./types";
 
 // Constants for retry logic
 const INITIAL_RETRY_DELAY_MS = 1000; // Initial delay before first retry

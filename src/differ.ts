@@ -1,6 +1,6 @@
 import { diffLines } from "diff";
-import type { ChangeResult, SnapshotEntry } from "./types.js";
-import { TRUNCATION_LIMITS, truncateText } from "./utils.js";
+import type { ChangeResult, SnapshotEntry } from "./types";
+import { TRUNCATION_LIMITS, truncateText } from "./utils";
 
 /**
  * Compare content and generate change result
