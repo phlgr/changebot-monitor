@@ -12,7 +12,7 @@
         "diff": "^8.0.0",
         "lefthook": "^2.0.13",
         "shelljs": "^0.10.0",
-        "xpath": "^0.0.32",
+        "xpath": "^0.0.34",
       },
       "devDependencies": {
         "@biomejs/biome": "2.3.10",
@@ -290,7 +290,7 @@
 
     "which": ["which@2.0.2", "", { "dependencies": { "isexe": "^2.0.0" }, "bin": { "node-which": "./bin/node-which" } }, "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA=="],
 
-    "xpath": ["xpath@0.0.32", "", {}, "sha512-rxMJhSIoiO8vXcWvSifKqhvV96GjiD5wYb8/QHdoRyQvraTpp4IEv944nhGausZZ3u7dhQXteZuZbaqfpB7uYw=="],
+    "xpath": ["xpath@0.0.34", "", {}, "sha512-FxF6+rkr1rNSQrhUNYrAFJpRXNzlDoMxeXN5qI84939ylEv3qqPFKa85Oxr6tDaJKqwW6KKyo2v26TSv3k6LeA=="],
 
     "zod": ["zod@4.3.4", "", {}, "sha512-Zw/uYiiyF6pUT1qmKbZziChgNPRu+ZRneAsMUDU6IwmXdWt5JwcUfy2bvLOCUtz5UniaN/Zx5aFttZYbYc7O/A=="],
 
