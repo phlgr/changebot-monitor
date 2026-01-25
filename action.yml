@@ -1,18 +1,11 @@
 name: ChangeBot
-description: Monitor websites for changes and get notified via ntfy.sh. Powered by GitHub Actions and Bun.
+description: Monitor websites for changes and get notified via webhooks or ntfy.sh. Powered by GitHub Actions and Bun.
 author: Philipp Gartz <https://github.com/phlgr>
 inputs:
   command:
     required: true
     description: The command to run (update or check).
     default: update
-  ntfy_server:
-    required: false
-    description: The ntfy server URL
-    default: https://ntfy.sh
-  ntfy_topic:
-    required: true
-    description: The ntfy topic name
 runs:
   using: composite
   steps:
@@ -43,11 +36,9 @@ runs:
       working-directory: .changebot-monitor
 
     # Run the monitor from the calling repo's root (so git operations work)
+    # Environment variables are inherited from the calling workflow
     - run: bun run .changebot-monitor/src/monitor.ts --${{ inputs.command }}
       shell: bash
-      env:
-        NTFY_SERVER: ${{ inputs.ntfy_server }}
-        NTFY_TOPIC: ${{ inputs.ntfy_topic }}
 branding:
   icon: search
   color: blue
