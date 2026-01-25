@@ -1,4 +1,13 @@
-import type { ChangeResult, Config, Snapshot, Website } from "./types";
+import type {
+	ChangeResult,
+	Config,
+	NotificationChannel,
+	NotificationPayload,
+	NtfyChannel,
+	Snapshot,
+	WebhookChannel,
+	Website,
+} from "./types";
 import {
 	filenameFromUrlAndName,
 	formatTimestamp,
@@ -14,10 +23,130 @@ const priorityMap: Record<Website["priority"], number> = {
 } as const;
 
 /**
+ * Render template string with payload values
+ * Replaces {{placeholder}} with corresponding payload values
+ */
+function renderTemplate(
+	template: string,
+	payload: NotificationPayload,
+): string {
+	const variables: Record<string, string> = {
+		title: payload.title,
+		message: payload.message,
+		url: payload.url,
+		name: payload.name,
+		priority: payload.priority,
+		priority_num: String(payload.priorityNum),
+		tags: payload.tags.join(","),
+		timestamp: payload.timestamp,
+		event: payload.event,
+		hash: payload.hash ?? "",
+		diff: payload.diff ?? "",
+	};
+
+	return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+		return variables[key] ?? match;
+	});
+}
+
+/**
+ * Look up a channel by name from the config
+ */
+function getChannelByName(name: string, config: Config): NotificationChannel {
+	const channel = config.channels?.[name];
+	if (!channel) {
+		throw new Error(
+			`Unknown notification channel: "${name}". Make sure it's defined in the 'channels' section of your config.`,
+		);
+	}
+	return channel;
+}
+
+/**
+ * Resolve notifiers for a website
+ * Returns array of NotificationChannel objects (empty array if no notifiers configured)
+ */
+function resolveNotifiers(
+	website: Website,
+	config: Config,
+): NotificationChannel[] {
+	// If no notifiers specified, use default_channel from settings (or empty array)
+	if (!website.notifiers || website.notifiers.length === 0) {
+		const defaultChannel = config.settings.default_channel;
+		if (!defaultChannel) {
+			return []; // No notifications configured - silently skip
+		}
+		return [getChannelByName(defaultChannel, config)];
+	}
+
+	return website.notifiers.map((notifier) => {
+		// If it's a string, look up in named channels
+		if (typeof notifier === "string") {
+			return getChannelByName(notifier, config);
+		}
+		// Otherwise it's an inline channel definition
+		return notifier;
+	});
+}
+
+/**
+ * Send notification to a single channel
+ */
+async function sendToChannel(
+	channel: NotificationChannel,
+	payload: NotificationPayload,
+): Promise<void> {
+	if (channel.type === "ntfy") {
+		await sendNtfyNotification(channel, payload);
+	} else if (channel.type === "webhook") {
+		await sendWebhookNotification(channel, payload);
+	} else {
+		// TypeScript exhaustive check
+		const _exhaustive: never = channel;
+		throw new Error(
+			`Unknown channel type: ${(_exhaustive as NotificationChannel).type}`,
+		);
+	}
+}
+
+/**
+ * Send notification to all resolved channels in parallel
+ */
+async function sendToAllChannels(
+	channels: NotificationChannel[],
+	payload: NotificationPayload,
+): Promise<void> {
+	if (channels.length === 0) {
+		return; // No channels configured - silently skip
+	}
+
+	const results = await Promise.allSettled(
+		channels.map((channel) => sendToChannel(channel, payload)),
+	);
+
+	// Log any failures
+	const failures = results.filter(
+		(r): r is PromiseRejectedResult => r.status === "rejected",
+	);
+
+	if (failures.length > 0) {
+		for (const failure of failures) {
+			console.error("Channel notification failed:", failure.reason);
+		}
+		// Only throw if ALL channels failed
+		if (failures.length === results.length && failures.length > 0) {
+			throw new Error(
+				`All ${failures.length} notification channels failed. First error: ${failures[0]?.reason}`,
+			);
+		}
+		console.warn(
+			`${failures.length}/${results.length} notification channels failed`,
+		);
+	}
+}
+
+/**
  * Check if error notification should be sent based on throttling rules
- * @param errorCount - Current error count from snapshot
- * @param lastNotificationTime - Timestamp of last error notification (0 if never notified)
- * @returns Object with shouldNotify flag and reason if throttled
  */
 function shouldSendErrorNotification(
 	errorCount: number,
@@ -37,15 +166,14 @@ function shouldSendErrorNotification(
 				shouldNotify: false,
 				reason: `error count: ${errorCount}/${threshold}`,
 			};
-		} else {
-			const remainingCooldown = Math.ceil(
-				(cooldown - timeSinceLastNotification) / 60000,
-			);
-			return {
-				shouldNotify: false,
-				reason: `cooldown: ${remainingCooldown} minutes remaining`,
-			};
 		}
+		const remainingCooldown = Math.ceil(
+			(cooldown - timeSinceLastNotification) / 60000,
+		);
+		return {
+			shouldNotify: false,
+			reason: `cooldown: ${remainingCooldown} minutes remaining`,
+		};
 	}
 
 	return { shouldNotify: true };
@@ -81,7 +209,6 @@ export async function sendChangeNotification(
 			if (fullMessage.length <= TRUNCATION_LIMITS.MAX_MESSAGE_SIZE) {
 				message = fullMessage;
 			} else {
-				// Diff too large, just send summary
 				message = `${baseMessage}\n\n(Diff too large to include in notification)`;
 			}
 		} else {
@@ -89,29 +216,30 @@ export async function sendChangeNotification(
 		}
 	}
 
-	await sendNtfyNotification(
-		{
-			topic: config.ntfy.topic,
-			title,
+	const payload: NotificationPayload = {
+		title,
+		message,
+		url: result.url,
+		name: result.name,
+		priority: website.priority,
+		priorityNum: priorityMap[website.priority] ?? priorityMap.default,
+		tags: [
+			...(website.tags ?? []),
+			"changedetection",
+			result.isFirstRun ? "initial" : "changed",
+		],
+		timestamp: new Date().toISOString(),
+		event: result.isFirstRun ? "initial" : "change",
+		hash: result.newHash,
+		diff: result.diff,
+	};
 
-			priority: priorityMap[website.priority] ?? priorityMap.default,
-			tags: [
-				...(website.tags ?? []),
-				"changedetection",
-				result.isFirstRun ? "initial" : "changed",
-			],
-			message,
-			click: result.url,
-		},
-		{ config },
-	);
+	const channels = resolveNotifiers(website, config);
+	await sendToAllChannels(channels, payload);
 }
 
 /**
  * Send error notification with throttling
- * @param website - The website that failed
- * @param error - The error that occurred
- * @param snapshot - The snapshot containing error count and last notification time
  * @returns Updated snapshot with last_error_notification_time set if notification was sent, or null if throttled
  */
 export async function sendErrorNotification(
@@ -140,17 +268,20 @@ export async function sendErrorNotification(
 		`Error: ${error.message}\n` +
 		`Timestamp: ${formatTimestamp(new Date())}`;
 
-	await sendNtfyNotification(
-		{
-			topic: config.ntfy.topic,
-			title,
-			message,
-			priority: priorityMap.urgent,
-			tags: [...(website.tags ?? []), "error"],
-			click: website.url,
-		},
-		{ config },
-	);
+	const payload: NotificationPayload = {
+		title,
+		message,
+		url: website.url,
+		name: website.name,
+		priority: "urgent",
+		priorityNum: priorityMap.urgent,
+		tags: [...(website.tags ?? []), "error"],
+		timestamp: new Date().toISOString(),
+		event: "error",
+	};
+
+	const channels = resolveNotifiers(website, config);
+	await sendToAllChannels(channels, payload);
 
 	// Return updated snapshot with notification time
 	if (snapshot) {
@@ -166,31 +297,89 @@ export async function sendErrorNotification(
  * Send ntfy.sh notification
  */
 async function sendNtfyNotification(
-	params: {
-		topic: string;
-		title: string;
-		priority: number;
-		message: string;
-		tags?: string[];
-		click?: string;
-	},
-	{ config }: { config: Config },
+	channel: NtfyChannel,
+	payload: NotificationPayload,
 ): Promise<void> {
+	const params = {
+		topic: channel.topic,
+		title: payload.title,
+		priority: payload.priorityNum,
+		message: payload.message,
+		tags: payload.tags,
+		click: payload.url,
+	};
+
 	try {
-		const response = await fetch(config.ntfy.server, {
+		const response = await fetch(channel.server, {
 			method: "POST",
 			body: JSON.stringify(params),
 		});
 
 		if (!response.ok) {
 			throw new Error(
-				`ntfy.sh returned ${response.status}: ${response.statusText} for ${JSON.stringify(params)}`,
+				`ntfy.sh returned ${response.status}: ${response.statusText}`,
 			);
 		}
 
-		console.log(`✅ Notification sent: ${params.title}`);
+		console.log(`✅ Notification sent (ntfy): ${payload.title}`);
 	} catch (error) {
 		console.error("Failed to send ntfy notification:", error);
+		throw error;
+	}
+}
+
+/**
+ * Send webhook notification
+ */
+async function sendWebhookNotification(
+	channel: WebhookChannel,
+	payload: NotificationPayload,
+): Promise<void> {
+	const method = channel.method ?? "POST";
+	const headers: Record<string, string> = {
+		"Content-Type": "application/json",
+		...channel.headers,
+	};
+
+	// Render body template, or use default JSON payload
+	let body: string | undefined;
+	if (method !== "GET") {
+		if (channel.body) {
+			body = renderTemplate(channel.body, payload);
+		} else {
+			// Default body if none specified
+			body = JSON.stringify({
+				title: payload.title,
+				message: payload.message,
+				url: payload.url,
+				name: payload.name,
+				priority: payload.priority,
+				tags: payload.tags,
+				timestamp: payload.timestamp,
+				event: payload.event,
+			});
+		}
+	}
+
+	// Render URL template (for dynamic URLs)
+	const url = renderTemplate(channel.url, payload);
+
+	try {
+		const response = await fetch(url, {
+			method,
+			headers,
+			body,
+		});
+
+		if (!response.ok) {
+			throw new Error(
+				`Webhook returned ${response.status}: ${response.statusText}`,
+			);
+		}
+
+		console.log(`✅ Notification sent (webhook): ${payload.title}`);
+	} catch (error) {
+		console.error(`Failed to send webhook notification to ${url}:`, error);
 		throw error;
 	}
 }
