@@ -4,7 +4,7 @@ import type { Config } from "../types";
 function parseConfig(config: unknown) {
 	return JSON.parse(
 		JSON.stringify(config).replace(
-			/\${([^:-]+)(?::([^}]+))?}/g,
+			/\${([^}:-]+)(?::-([^}]+))?}/g,
 			(_, key, defaultValue) => process.env[key] || defaultValue || "",
 		),
 	);
@@ -16,6 +16,5 @@ export const getConfig = async (): Promise<Config> => {
 	const config = await Bun.file(join(".", ".changebotrc.yml")).text();
 	const parsedConfig = parseConfig(Bun.YAML.parse(config)) as Config;
 	__config = parsedConfig;
-	console.log(parsedConfig);
 	return parsedConfig;
 };
