@@ -11,7 +11,7 @@
 		"knip": "bun"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.3.12",
+		"@biomejs/biome": "2.3.13",
 		"@types/bun": "1.3.6",
 		"@types/diff": "8.0.0",
 		"@types/node": "25.0.10",
