@@ -16,10 +16,10 @@
 		"@types/diff": "8.0.0",
 		"@types/node": "25.5.0",
 		"knip": "6.0.6",
-		"typescript": "5.9.3"
+		"typescript": "6.0.2"
 	},
 	"peerDependencies": {
-		"typescript": "^5"
+		"typescript": "^5 || ^6.0.0"
 	},
 	"dependencies": {
 		"@typescript/native-preview": "^7.0.0-dev.20260102.1",
