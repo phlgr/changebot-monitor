@@ -7,7 +7,7 @@
       "dependencies": {
         "@types/shelljs": "^0.10.0",
         "@typescript/native-preview": "^7.0.0-dev.20260102.1",
-        "@xmldom/xmldom": "^0.8.10",
+        "@xmldom/xmldom": "^0.9.0",
         "cheerio": "^1.0.0-rc.12",
         "diff": "^8.0.0",
         "lefthook": "^2.0.13",
@@ -168,7 +168,7 @@
 
     "@typescript/native-preview-win32-x64": ["@typescript/native-preview-win32-x64@7.0.0-dev.20260308.1", "", { "os": "win32", "cpu": "x64" }, "sha512-4LrXmaMfzedwczANIkD/M9guPD4EWuQnCxOJsJkdYi3ExWQDjIFwfmxTtAmfPBWxVExLfn7UUkz/yCtcv2Wd+w=="],
 
-    "@xmldom/xmldom": ["@xmldom/xmldom@0.8.11", "", {}, "sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw=="],
+    "@xmldom/xmldom": ["@xmldom/xmldom@0.9.10", "", {}, "sha512-A9gOqLdi6cV4ibazAjcQufGj0B1y/vDqYrcuP6d/6x8P27gRS8643Dj9o1dEKtB6O7fwxb2FgBmJS2mX7gpvdw=="],
 
     "boolbase": ["boolbase@1.0.0", "", {}, "sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww=="],
 
