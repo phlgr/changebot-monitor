@@ -104,6 +104,8 @@ function applyXPathSelector(html: string, xpathExpr: string): string {
 	try {
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(html, "text/html");
+		// @ts-expect-error xpath types use lib.dom Node; @xmldom/xmldom@0.9 dropped
+		// EventTarget methods, so the shape no longer matches. Runtime is fine.
 		const result = xpath.select(xpathExpr, doc);
 
 		if (Array.isArray(result) && result.length > 0) {
