@@ -26,7 +26,7 @@
 		"@types/shelljs": "^0.10.0",
 		"@xmldom/xmldom": "^0.8.10",
 		"cheerio": "^1.0.0-rc.12",
-		"diff": "^8.0.0",
+		"diff": "^9.0.0",
 		"lefthook": "^2.0.13",
 		"shelljs": "^0.10.0",
 		"xpath": "^0.0.34"
